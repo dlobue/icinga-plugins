@@ -46,7 +46,7 @@ class SSHLagCheck(nagiosplugin.Check):
                                        skip=1, #the latest result set is probably still receiving results.
                                       )
 
-        assert (datetime.utcnow() - found['_id']).seconds < 60, "result set found is over a minute old!"
+        assert (datetime.utcnow() - found['_id']).seconds < 60, "stale data! is arke running?"
 
         results = [ x for x in found['data'] if x['to'] == self.server ]
 

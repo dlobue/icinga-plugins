@@ -47,7 +47,8 @@ class DiskCheck(nagiosplugin.Check):
         field = 'data.fs.%s.percent' % self.filesystem
         res = db[coll_name].find_one({'host': self.server},
                                          sort=[('ts', pymongo.DESCENDING)],
-                                         fields=[field])
+                                         fields=[field, 'ts'])
+        assert (datetime.utcnow() - res['ts']).seconds < 60, "stale data! is arke running?"
         fs_perc = res['data']['fs'][self.filesystem]['percent']
         self.usage = fs_perc
         self.measures = [nagiosplugin.Measure(

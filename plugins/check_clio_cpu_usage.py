@@ -48,6 +48,8 @@ class CPUCheck(nagiosplugin.Check):
         t2 = res.next()
         t1 = res.next()
 
+        assert (datetime.utcnow() - t2['ts']).seconds < 60, "stale data! is arke running?"
+
         t1_all = sum(t1['data']['cpu_times'].values())
         t1_busy = t1_all - t1['data']['cpu_times']['idle']
 

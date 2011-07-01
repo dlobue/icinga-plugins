@@ -51,7 +51,7 @@ class ProcessCheck(nagiosplugin.Check):
                                          sort=[('ts', pymongo.DESCENDING)],
                                          fields=[field, 'ts'])
 
-        assert (datetime.utcnow() - result['ts']).seconds < 60, "result is over a minute old!"
+        assert (datetime.utcnow() - result['ts']).seconds < 60, "stale data! is arke running?"
 
         processes = []
         for pid,properties in result['data']['processes'].iteritems():
