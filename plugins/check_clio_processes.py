@@ -55,7 +55,8 @@ class ProcessCheck(nagiosplugin.Check):
 
         processes = []
         for pid,properties in result['data']['processes'].iteritems():
-            if self.search_string in properties['cmdline']:
+            if self.search_string in properties['cmdline'] and \
+               properties['state'] not in ('zombie', 'dead', 'stopped', 'tracing stop'):
                 processes.append((
                     pid,
                     properties['name'],
