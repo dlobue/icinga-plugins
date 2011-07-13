@@ -63,7 +63,7 @@ class ProcessCheck(nagiosplugin.Check):
         if args:
             ports = set()
             for arg in args:
-                if ',' in arg:
+                if any(((x in arg) for x in (',',' ','\t'))):
                     args.extend(arg.replace(',',' ').split())
                 else:
                     ports.add(int(arg))
