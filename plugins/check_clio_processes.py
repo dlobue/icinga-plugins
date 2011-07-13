@@ -2,6 +2,7 @@
 
 from datetime import datetime
 from pprint import pformat
+import re
 
 import nagiosplugin
 import pymongo
@@ -13,7 +14,8 @@ class ProcessCheck(nagiosplugin.Check):
 
     def __init__(self, optparser, logger):
         optparser.set_usage('usage: %prog [options] <hostname of server to check> <string to search for in process cmdline> [<port process must be listening on>]')
-        optparser.description = "Monitor the number of processes running with the specified name."
+        optparser.description = ("Monitor the number of processes running with the specified name.\n"
+                                 "Supports matches made using python regex")
         optparser.version = self.version
         optparser.add_option(
             '-s', '--server', default='localhost',
@@ -49,6 +51,7 @@ class ProcessCheck(nagiosplugin.Check):
 
         try:
             self.search_string = args.pop(0)
+            self.search_obj = re.compile(self.search_string)
         except IndexError:
             print('What process am I supposed to look for?!')
             import sys
@@ -85,7 +88,7 @@ class ProcessCheck(nagiosplugin.Check):
         parent_pids = []
         processes = []
         for pid,properties in result['data']['processes'].iteritems():
-            if self.search_string in properties['cmdline'] and \
+            if self.search_obj.search(properties['cmdline']) and \
                properties['status'] not in ('zombie', 'dead', 'stopped', 'tracing stop'):
 
                 if self.listening_ports:
