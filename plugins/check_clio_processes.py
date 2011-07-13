@@ -21,6 +21,9 @@ class ProcessCheck(nagiosplugin.Check):
             '-s', '--server', default='localhost',
             help='clio database server to query (default: %default)')
         optparser.add_option(
+            '-i', '--case_insensitive', action='store_true', default=False,
+            help='clio database server to query (default: %default)')
+        optparser.add_option(
             '-p', '--port_match', default='any',
             help=('if multiple ports are given, does a process need to contain '
                   'all the given ports in order to match, or will any do? '
@@ -51,7 +54,7 @@ class ProcessCheck(nagiosplugin.Check):
 
         try:
             self.search_string = args.pop(0)
-            self.search_obj = re.compile(self.search_string)
+            self.search_obj = re.compile(self.search_string, options.case_insensitive and re.I)
         except IndexError:
             print('What process am I supposed to look for?!')
             import sys
