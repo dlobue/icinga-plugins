@@ -75,7 +75,7 @@ class MongodbReplLagCheck(nagiosplugin.Check):
             return 'not in a replica set'
         if self.primary:
             return 'currently the primary server. not lagging behind self.'
-        return 'optime is %i behind primary'
+        return 'optime is %i behind primary' % self.repl_lag
 
 
 main = nagiosplugin.Controller(MongodbReplLagCheck)
