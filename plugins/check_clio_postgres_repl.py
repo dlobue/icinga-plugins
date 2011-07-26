@@ -67,7 +67,7 @@ class PostgresReplLagCheck(nagiosplugin.Check):
 
         if self.server == res['host']:
             self.primary = True
-            self.recieve_delay = 0
+            self.receive_delay = 0
             self.replay_delay = 0
         else:
             self.primary = False
