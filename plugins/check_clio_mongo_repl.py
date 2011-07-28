@@ -67,6 +67,7 @@ class MongodbReplLagCheck(nagiosplugin.Check):
                 self.primary = False
                 self.repl_lag = primary['optime']['t'] - me['optime']['t']
 
+        assert primary['optime']['t'] >= me['optime']['t'], "optime of master is less than the slave. the hell?"
         self.measures = [nagiosplugin.Measure(
             'mongodb_repl_lag', self.repl_lag, warning=self.warning, critical=self.critical)]
 
