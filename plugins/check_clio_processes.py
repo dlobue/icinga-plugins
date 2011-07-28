@@ -90,7 +90,8 @@ class ProcessCheck(nagiosplugin.Check):
 
         parent_pids = []
         processes = []
-        for pid,properties in result['data']['processes'].iteritems():
+        for properties in result['data']['processes']:
+            pid = properties['pid']
             if self.search_obj.search(properties['cmdline']) and \
                properties['status'] not in ('zombie', 'dead', 'stopped', 'tracing stop'):
 
@@ -113,10 +114,10 @@ class ProcessCheck(nagiosplugin.Check):
 
         if parent_pids:
             parent_pids = map(int, parent_pids)
-            for pid,properties in result['data']['processes'].iteritems():
+            for properties in result['data']['processes']:
                 if properties['ppid'] in parent_pids:
                     processes.append((
-                        pid,
+                        properties['pid'],
                         properties['name'],
                         properties['cmdline'],
                     ))
