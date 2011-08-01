@@ -1,6 +1,7 @@
 #!/usr/bin/python2
 
 from datetime import datetime
+from pprint import pformat
 
 import nagiosplugin
 import pymongo
@@ -65,9 +66,9 @@ class MongodbReplLagCheck(nagiosplugin.Check):
                 self.repl_lag = 0
             else:
                 self.primary = False
-                self.repl_lag = primary['optime']['t'] - me['optime']['t']
+                self.repl_lag = max(0, primary['optime']['t'] - me['optime']['t'])
 
-            assert primary['optime']['t'] >= me['optime']['t'], "optime of master is less than the slave. the hell?"
+            #assert primary['optime']['t'] >= me['optime']['t'], "optime of master is less than the slave. the hell?\n%s" % pformat(res)
         self.measures = [nagiosplugin.Measure(
             'mongodb_repl_lag', self.repl_lag, warning=self.warning, critical=self.critical)]
 
