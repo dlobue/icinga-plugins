@@ -43,7 +43,7 @@ class SSHLagCheck(nagiosplugin.Check):
         db = pymongo.Connection(self.db_server).clio
         coll_name = 'ssh_hello_%s' % datetime.now().strftime('%Y%m')
         found = db[coll_name].find_one(sort=[('_id', pymongo.DESCENDING)],
-                                       skip=2, #the latest result set is probably still receiving results.
+                                       skip=1, #the latest result set is probably still receiving results.
                                       )
 
         assert (datetime.utcnow() - found['_id']).seconds < 60, "stale data! is arke running?"
