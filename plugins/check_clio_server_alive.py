@@ -73,14 +73,14 @@ class AliveCheck(nagiosplugin.Check):
                 'alive-ssh_lag', self.lag, warning=self.warning, critical=self.critical)]
         elif sent_data_recently:
             self.measures = [nagiosplugin.Measure(
-                'alive', self.alive, critical=0)]
+                'alive', int(self.alive), critical=0)]
                 #'alive', self.alive, warning=self.warning, critical=0)]
 
 
     def default_message(self):
         if hasattr(self, 'lag'):
             return 'average latency to perform SSH banner exchange: %f' % self.lag
-        elif hasattr(self, 'alive'):
+        elif hasattr(self, 'alive') and self.alive:
             return "has sent in data recently and is alive, but is having network problems"
 
 
