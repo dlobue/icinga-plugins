@@ -43,7 +43,7 @@ class AliveCheck(nagiosplugin.Check):
         db = pymongo.Connection(self.db_server).clio
         coll_name = 'ssh_hello_%s' % datetime.utcnow().strftime('%Y%m')
         found = db[coll_name].find_one(sort=[('_id', pymongo.DESCENDING)],
-                                       skip=2, #the latest result set is probably still receiving results.
+                                       skip=1, #the latest result set is probably still receiving results.
                                       )
 
         #assert (datetime.utcnow() - found['_id']).seconds < 60, "stale data! is arke running?"
@@ -53,6 +53,7 @@ class AliveCheck(nagiosplugin.Check):
                                          sort=[('ts', pymongo.DESCENDING)],
                                          fields=['ts'])
 
+        #assert (datetime.utcnow() - res['ts']).seconds < 60, "stale data! is arke running?"
         #assert ((datetime.utcnow() - res['ts']).seconds < 60) or ((datetime.utcnow() - found['_id']).seconds < 60), "stale data! is arke running?"
         self.alive = sent_data_recently =  (datetime.utcnow() - res['ts']).seconds < 60
         ssh_data_fresh = (datetime.utcnow() - found['_id']).seconds < 60
