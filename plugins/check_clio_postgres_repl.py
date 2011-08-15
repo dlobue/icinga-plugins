@@ -44,7 +44,7 @@ class PostgresReplLagCheck(nagiosplugin.Check):
 
     def obtain_data(self):
         db = pymongo.Connection(self.db_server).clio
-        coll_name = 'postgres_repl_%s' % datetime.now().strftime('%Y%m')
+        coll_name = 'postgres_repl_%s' % datetime.utcnow().strftime('%Y%m')
         field = 'data'
         res = db[coll_name].find_one({'$or': [{'host': self.server},
                                               {'data.slaves': {

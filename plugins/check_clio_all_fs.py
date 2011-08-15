@@ -39,7 +39,7 @@ class AllDiskSpaceCheck(nagiosplugin.Check):
 
     def obtain_data(self):
         db = pymongo.Connection(self.db_server).clio
-        coll_name = 'system_%s' % datetime.now().strftime('%Y%m')
+        coll_name = 'system_%s' % datetime.utcnow().strftime('%Y%m')
         field = 'data.fs'
         res = db[coll_name].find_one({'host': self.server},
                                          sort=[('ts', pymongo.DESCENDING)],
