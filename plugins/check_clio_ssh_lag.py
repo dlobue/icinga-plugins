@@ -8,7 +8,7 @@ import pymongo
 class SSHLagCheck(nagiosplugin.Check):
 
     name = 'ssh hello response latency'
-    version = '0.1'
+    version = '0.2'
 
     def __init__(self, optparser, logger):
         optparser.set_usage('usage: %prog [options] <hostname of server to check>')
@@ -41,8 +41,8 @@ class SSHLagCheck(nagiosplugin.Check):
 
     def obtain_data(self):
         db = pymongo.Connection(self.db_server).clio
-        coll_name = 'ssh_hello_%s' % datetime.now().strftime('%Y%m')
-        found = db[coll_name].find_one(sort=[('_id', pymongo.DESCENDING)],
+        coll_name = 'ssh_hello_%s' % datetime.utcnow().strftime('%Y%m')
+        found = db[coll_name].find(sort=[('_id', pymongo.DESCENDING)],
                                        skip=1, #the latest result set is probably still receiving results.
                                       )
 
