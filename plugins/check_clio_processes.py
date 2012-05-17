@@ -6,6 +6,7 @@ import re
 
 import nagiosplugin
 import pymongo
+from pyes import ES, query
 
 class ProcessCheck(nagiosplugin.Check):
 
@@ -20,6 +21,12 @@ class ProcessCheck(nagiosplugin.Check):
         optparser.add_option(
             '-s', '--server', default='localhost',
             help='clio database server to query (default: %default)')
+        optparser.add_option(
+            '-P', '--port', default=9200,
+            help='clio database server port (default: %default)')
+        optparser.add_option(
+            '-T', '--conn_type', default='http',
+            help='clio database server connection type [http, https, thrift] (default: %default)')
         optparser.add_option(
             '-i', '--case_insensitive', action='store_true', default=False,
             help='clio database server to query (default: %default)')
@@ -39,6 +46,8 @@ class ProcessCheck(nagiosplugin.Check):
         self.warning = options.warning
         self.critical = options.critical
         self.db_server = options.server
+        self.db_port = options.port
+        self.db_conn_type = options.conn_type
         self.port_match = options.port_match
         if self.port_match not in ('any', 'all'):
             print('Invalid match type! Valid values are "any" and "all". Got: %s' % self.port_match)
@@ -74,14 +83,41 @@ class ProcessCheck(nagiosplugin.Check):
             self.listening_ports = None
 
 
-    def obtain_data(self):
+    def _obtain_data_es(self, field, size=1):
+        conn = ES("%s:%s" % (self.db_server, self.db_port))
+
+        q = query.Search(query.TermQuery('host', self.server),
+                         sort=[dict(ts=dict(order='desc'))],
+                         fields=[field, 'ts'],
+                        )
+        res = conn.search(q,
+                          'clio', #TODO: turn into a parameter
+                          'system',
+                          size=size
+                         )
+
+
+        assert not res['timed_out']
+        assert res['hits']['total']
+
+        res = [_['fields'] for _ in res['hits']['hits']]
+        if size == 1:
+            res = res[0]
+        return res
+
+    def _obtain_data_mongo(self, field):
         db = pymongo.Connection(self.db_server).clio
         coll_name = 'system_%s' % datetime.utcnow().strftime('%Y%m')
-        field = 'data.processes'
         result = db[coll_name].find_one({'host': self.server},
                                          sort=[('ts', pymongo.DESCENDING)],
                                          fields=[field, 'ts'])
 
+        return result
+
+
+    def obtain_data(self):
+        field = 'data.processes'
+        result = self._obtain_data_es(field)
         assert (datetime.utcnow() - result['ts']).seconds < 60, "stale data! is arke running?"
 
         def is_listening(connections, port):
@@ -90,7 +126,7 @@ class ProcessCheck(nagiosplugin.Check):
 
         parent_pids = []
         processes = []
-        for properties in result['data']['processes']:
+        for properties in result[field]:
             pid = properties['pid']
             if self.search_obj.search(properties['cmdline']) and \
                properties['status'] not in ('zombie', 'dead', 'stopped', 'tracing stop'):
@@ -114,7 +150,7 @@ class ProcessCheck(nagiosplugin.Check):
 
         if parent_pids:
             parent_pids = map(int, parent_pids)
-            for properties in result['data']['processes']:
+            for properties in result[field]:
                 if properties['ppid'] in parent_pids:
                     processes.append((
                         properties['pid'],
