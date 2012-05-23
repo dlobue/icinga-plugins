@@ -51,7 +51,7 @@ class CPUCheck(nagiosplugin.Check):
                          sort=[dict(ts=dict(order='desc'))],
                          fields=[field, 'ts'],
                         )
-        res = conn.search(q,
+        res = conn.search_raw(q,
                           'clio', #TODO: turn into a parameter
                           'system',
                           size=2
