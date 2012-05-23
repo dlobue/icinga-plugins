@@ -1,15 +1,17 @@
 #!/usr/bin/python2
 
 from datetime import datetime
+from time import time
 
 import nagiosplugin
 import pymongo
-from pyes import ES, query
+from pyes import ES
 
 class SSHLagCheck(nagiosplugin.Check):
 
     name = 'ssh hello response latency'
     version = '0.2'
+    SSH_INTERVAL = 30
 
     def __init__(self, optparser, logger):
         optparser.set_usage('usage: %prog [options] <hostname of server to check>')
@@ -48,26 +50,14 @@ class SSHLagCheck(nagiosplugin.Check):
             import sys
             sys.exit(3)
 
-    def _obtain_data_es(self, field=None, size=1):
+    def _obtain_data_es(self, offset=1):
         conn = ES("%s:%s" % (self.db_server, self.db_port))
 
-        q = query.Search(query.TermQuery('host', self.server),
-                         sort=[dict(ts=dict(order='desc'))],
-                         fields=[field, 'ts'],
-                        )
-        res = conn.search_raw(q,
-                          'clio', #TODO: turn into a parameter
-                          'ssh_hello', #TODO: turn into a parameter
-                          size=size
-                         )
+        interval = self.SSH_INTERVAL
+        timestamp = int(time())
+        timestamp = (timestamp - (timestamp % interval)) - (interval * offset)
 
-
-        assert not res['timed_out']
-        assert res['hits']['total']
-
-        res = [_['fields'] for _ in res['hits']['hits']]
-        if size == 1:
-            res = res[0]
+        res = conn.get('clio', 'ssh_hello', timestamp)
         return res
 
     def _obtain_data_mongo(self):
@@ -81,7 +71,7 @@ class SSHLagCheck(nagiosplugin.Check):
     def obtain_data(self):
         #XXX: this should be a GET!
 
-        found = self._obtain_data_es(size=2)[-1]
+        found = self._obtain_data_es()
 
         assert (datetime.utcnow() - found['_id']).seconds < 60, "stale data! is arke running?"
 
