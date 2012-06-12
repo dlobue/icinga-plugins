@@ -84,7 +84,7 @@ class AllDiskSpaceCheck(nagiosplugin.Check):
 
         res = self._obtain_data_es(field)
 
-        assert (datetime.utcnow() - res['ts']).seconds < 60, "stale data! is arke running?"
+        assert (datetime.utcnow() - res['ts']).seconds < 60, "stale data! is arke running? timestamp: %s" % res['ts']
 
         self.usages = {}
         self.measures = []

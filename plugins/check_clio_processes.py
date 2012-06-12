@@ -118,7 +118,7 @@ class ProcessCheck(nagiosplugin.Check):
     def obtain_data(self):
         field = 'data.processes'
         result = self._obtain_data_es(field)
-        assert (datetime.utcnow() - result['ts']).seconds < 60, "stale data! is arke running?"
+        assert (datetime.utcnow() - result['ts']).seconds < 60, "stale data! is arke running? timestamp: %s" % result['ts']
 
         def is_listening(connections, port):
             return any((x for x in connections if x['status'] == u'LISTEN' and x['local_address'][1] == port))

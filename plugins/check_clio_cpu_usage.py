@@ -70,7 +70,7 @@ class CPUCheck(nagiosplugin.Check):
         t2, t1 = self._obtain_data_es(field)
 
 
-        assert (datetime.utcnow() - t2['ts']).seconds < 60, "stale data! is arke running?"
+        assert (datetime.utcnow() - t2['ts']).seconds < 60, "stale data! is arke running? timestamps: %s, %s" % (t2['ts'], t1['ts'])
 
         t1_all = sum(t1[field].values())
         t1_busy = t1_all - t1[field]['idle']

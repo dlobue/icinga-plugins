@@ -85,7 +85,7 @@ class FileHandleCheck(nagiosplugin.Check):
         #TODO: switching between mongo and es a switch
         #TODO: es concatenates nested fields. mongo doesn't. deal with it.
 
-        assert (datetime.utcnow() - res['ts']).seconds < 60, "stale data! is arke running?"
+        assert (datetime.utcnow() - res['ts']).seconds < 60, "stale data! is arke running? timestamp: %s" % res['ts']
 
         self.data = data = res[field]
         self.measures = [nagiosplugin.Measure(
