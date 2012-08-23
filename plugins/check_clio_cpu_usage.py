@@ -48,8 +48,8 @@ class CPUCheck(nagiosplugin.Check):
         conn = ES("%s:%s" % (self.db_server, self.db_port))
 
         q = query.Search(query.TermQuery('host', self.server),
-                         sort=[dict(ts=dict(order='desc'))],
-                         fields=[field, 'ts'],
+                         sort=[dict(timestamp=dict(order='desc'))],
+                         fields=[field, 'timestamp'],
                         )
         res = conn.search_raw(q,
                           'clio', #TODO: turn into a parameter
@@ -70,7 +70,7 @@ class CPUCheck(nagiosplugin.Check):
         t2, t1 = self._obtain_data_es(field)
 
 
-        assert (datetime.utcnow() - t2['ts']).seconds < 60, "stale data! is arke running? timestamps: %s, %s" % (t2['ts'], t1['ts'])
+        assert (datetime.utcnow() - t2['timestamp']).seconds < 60, "stale data! is arke running? timestamps: %s, %s" % (t2['timestamp'], t1['timestamp'])
 
         t1_all = sum(t1[field].values())
         t1_busy = t1_all - t1[field]['idle']
@@ -82,7 +82,7 @@ class CPUCheck(nagiosplugin.Check):
         all_delta = t2_all - t1_all
         busy_perc = (busy_delta / all_delta) * 100
 
-        interval = (t2['ts'] - t1['ts'])
+        interval = (t2['timestamp'] - t1['timestamp'])
         self.interval = '%i.%i' % (interval.seconds, interval.microseconds)
         self.usage = busy_perc
         self.measures = [nagiosplugin.Measure(

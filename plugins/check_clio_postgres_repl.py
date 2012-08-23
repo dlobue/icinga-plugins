@@ -54,11 +54,11 @@ class PostgresReplLagCheck(nagiosplugin.Check):
                                               }},
                                              ],
                                      },
-                                     sort=[('ts', pymongo.DESCENDING)],
-                                     fields=[field, 'host', 'ts'],
+                                     sort=[('timestamp', pymongo.DESCENDING)],
+                                     fields=[field, 'host', 'timestamp'],
                                     )
 
-        assert (datetime.utcnow() - res['ts']).seconds < 60, "stale data! is arke running?"
+        assert (datetime.utcnow() - res['timestamp']).seconds < 60, "stale data! is arke running?"
 
         def calc_offset(data):
             pieces = data.split('/')

@@ -51,8 +51,8 @@ class FileHandleCheck(nagiosplugin.Check):
         conn = ES("%s:%s" % (self.db_server, self.db_port))
 
         q = query.Search(query.TermQuery('host', self.server),
-                         sort=[dict(ts=dict(order='desc'))],
-                         fields=[field, 'ts'],
+                         sort=[dict(timestamp=dict(order='desc'))],
+                         fields=[field, 'timestamp'],
                         )
         res = conn.search_raw(q,
                           'clio', #TODO: turn into a parameter
@@ -74,8 +74,8 @@ class FileHandleCheck(nagiosplugin.Check):
         db = pymongo.Connection(self.db_server).clio
         coll_name = 'system_%s' % datetime.utcnow().strftime('%Y%m')
         res = db[coll_name].find_one({'host': self.server},
-                                         sort=[('ts', pymongo.DESCENDING)],
-                                         fields=[field, 'ts'])
+                                         sort=[('timestamp', pymongo.DESCENDING)],
+                                         fields=[field, 'timestamp'])
         return res
 
 
@@ -85,7 +85,7 @@ class FileHandleCheck(nagiosplugin.Check):
         #TODO: switching between mongo and es a switch
         #TODO: es concatenates nested fields. mongo doesn't. deal with it.
 
-        assert (datetime.utcnow() - res['ts']).seconds < 60, "stale data! is arke running? timestamp: %s" % res['ts']
+        assert (datetime.utcnow() - res['timestamp']).seconds < 60, "stale data! is arke running? timestamp: %s" % res['timestamp']
 
         self.data = data = res[field]
         self.measures = [nagiosplugin.Measure(

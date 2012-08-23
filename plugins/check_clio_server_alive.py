@@ -64,8 +64,8 @@ class AliveCheck(nagiosplugin.Check):
         conn = ES("%s:%s" % (self.db_server, self.db_port))
 
         q = query.Search(query.TermQuery('host', self.server),
-                         sort=[dict(ts=dict(order='desc'))],
-                         fields=['ts'],
+                         sort=[dict(timestamp=dict(order='desc'))],
+                         fields=['timestamp'],
                         )
         res = conn.search_raw(q,
                           'clio', #TODO: turn into a parameter
@@ -96,19 +96,19 @@ class AliveCheck(nagiosplugin.Check):
         db = pymongo.Connection(self.db_server).clio
         coll_name = 'system_%s' % datetime.utcnow().strftime('%Y%m')
         res = db[coll_name].find_one({'host': self.server},
-                                         sort=[('ts', pymongo.DESCENDING)],
-                                         fields=['ts'])
+                                         sort=[('timestamp', pymongo.DESCENDING)],
+                                         fields=['timestamp'])
 
         return res
-        #assert (datetime.utcnow() - res['ts']).seconds < 60, "stale data! is arke running?"
-        #assert ((datetime.utcnow() - res['ts']).seconds < 60) or ((datetime.utcnow() - found['_id']).seconds < 60), "stale data! is arke running?"
+        #assert (datetime.utcnow() - res['timestamp']).seconds < 60, "stale data! is arke running?"
+        #assert ((datetime.utcnow() - res['timestamp']).seconds < 60) or ((datetime.utcnow() - found['_id']).seconds < 60), "stale data! is arke running?"
 
     def obtain_data(self):
 
         res = self._obtain_data_system_es()
         found = self._obtain_data_ssh_es()
 
-        self.alive = sent_data_recently =  (datetime.utcnow() - res['ts']).seconds < 60
+        self.alive = sent_data_recently =  (datetime.utcnow() - res['timestamp']).seconds < 60
 
         try:
             ssh_data_fresh = (datetime.utcnow() - found['_id']).seconds < 60

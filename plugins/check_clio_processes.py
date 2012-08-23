@@ -87,8 +87,8 @@ class ProcessCheck(nagiosplugin.Check):
         conn = ES("%s:%s" % (self.db_server, self.db_port))
 
         q = query.Search(query.TermQuery('host', self.server),
-                         sort=[dict(ts=dict(order='desc'))],
-                         fields=[field, 'ts'],
+                         sort=[dict(timestamp=dict(order='desc'))],
+                         fields=[field, 'timestamp'],
                         )
         res = conn.search_raw(q,
                           'clio', #TODO: turn into a parameter
@@ -109,8 +109,8 @@ class ProcessCheck(nagiosplugin.Check):
         db = pymongo.Connection(self.db_server).clio
         coll_name = 'system_%s' % datetime.utcnow().strftime('%Y%m')
         result = db[coll_name].find_one({'host': self.server},
-                                         sort=[('ts', pymongo.DESCENDING)],
-                                         fields=[field, 'ts'])
+                                         sort=[('timestamp', pymongo.DESCENDING)],
+                                         fields=[field, 'timestamp'])
 
         return result
 
@@ -118,7 +118,7 @@ class ProcessCheck(nagiosplugin.Check):
     def obtain_data(self):
         field = 'data.processes'
         result = self._obtain_data_es(field)
-        assert (datetime.utcnow() - result['ts']).seconds < 60, "stale data! is arke running? timestamp: %s" % result['ts']
+        assert (datetime.utcnow() - result['timestamp']).seconds < 60, "stale data! is arke running? timestamp: %s" % result['timestamp']
 
         def is_listening(connections, port):
             return any((x for x in connections if x['status'] == u'LISTEN' and x['local_address'][1] == port))
