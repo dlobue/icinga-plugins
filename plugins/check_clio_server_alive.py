@@ -1,7 +1,6 @@
 #!/usr/bin/python2
 
-from datetime import datetime
-from time import time
+from datetime import datetime, timedelta
 
 import nagiosplugin
 import pymongo
@@ -11,7 +10,6 @@ class AliveCheck(nagiosplugin.Check):
 
     name = 'alive check'
     version = '0.2'
-    SSH_INTERVAL = 30
 
     def __init__(self, optparser, logger):
         optparser.set_usage('usage: %prog [options] <hostname of server to check>')
@@ -60,15 +58,40 @@ class AliveCheck(nagiosplugin.Check):
         res = conn.get('clio', 'ssh_hello', timestamp)
         return res
 
+    def _obtain_data_ssh_es(self):
+        conn = ES("%s:%s" % (self.db_server, self.db_port))
+
+        utcnow = datetime.utcnow()
+        start = utcnow - timedelta(minutes=2)
+
+        q = query.Search(query.TermQuery('data.to', self.server),
+                         filter=filters.RawFilter(dict(numeric_range=dict(timestamp={'from': start}))),
+                         sort=[dict(timestamp=dict(order='desc'))],
+                         fields=['timestamp', 'data.lag'],
+                        )
+        res = conn.search_raw(q,
+                          utcnow.strftime('clio_%Y%m'),
+                          'ssh_hello',
+                          size=100, #TODO: turn into a parameter
+                         )
+
+
+        assert not res['timed_out']
+        assert res['hits']['total']
+
+        res = [_['fields'] for _ in res['hits']['hits']]
+        return res
+
     def _obtain_data_system_es(self, size=1):
         conn = ES("%s:%s" % (self.db_server, self.db_port))
+        utcnow = datetime.utcnow()
 
         q = query.Search(query.TermQuery('host', self.server),
                          sort=[dict(timestamp=dict(order='desc'))],
                          fields=['timestamp'],
                         )
         res = conn.search_raw(q,
-                          'clio', #TODO: turn into a parameter
+                          utcnow.strftime('clio_%Y%m'),
                           'system',
                           size=size
                          )
@@ -106,25 +129,25 @@ class AliveCheck(nagiosplugin.Check):
     def obtain_data(self):
 
         res = self._obtain_data_system_es()
-        found = self._obtain_data_ssh_es()
+        results = self._obtain_data_ssh_es()
 
         self.alive = sent_data_recently =  (datetime.utcnow() - res['timestamp']).seconds < 60
 
-        try:
-            ssh_data_fresh = (datetime.utcnow() - found['_id']).seconds < 60
-        except KeyError:
-            ssh_data_fresh = True
+        #try:
+            #ssh_data_fresh = (datetime.utcnow() - found['_id']).seconds < 60
+        #except KeyError:
+            #ssh_data_fresh = True
 
 
 
-        results = [ x for x in found['data'] if x['to'] == self.server ]
+        #results = [ x for x in found['data'] if x['to'] == self.server ]
 
-        if ssh_data_fresh and results:
+        if results:
 
-            if all(( x['lag'] == -1 for x in results)):
+            if all(( x['data.lag'] == -1 for x in results)):
                 avg_lag = -1
             else:
-                avg_lag = sum(( x['lag'] for x in results if x['lag'] >= 0 )) / len(results)
+                avg_lag = sum(( x['data.lag'] for x in results if x['data.lag'] >= 0 )) / len(results)
 
             self.lag = avg_lag
             self.measures = [nagiosplugin.Measure(
