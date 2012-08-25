@@ -5,7 +5,7 @@ from datetime import datetime
 import nagiosplugin
 from pyes import ES, query
 
-from .utils import decode_record_timestamp
+from utils import decode_record_timestamp
 
 class CPUCheck(nagiosplugin.Check):
 

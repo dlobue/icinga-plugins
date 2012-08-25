@@ -8,7 +8,7 @@ import nagiosplugin
 import pymongo
 from pyes import ES, query
 
-from .utils import decode_record_timestamp
+from utils import decode_record_timestamp
 
 class ProcessCheck(nagiosplugin.Check):
 
