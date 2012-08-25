@@ -67,11 +67,11 @@ class FileHandleCheck(nagiosplugin.Check):
         assert not res['timed_out']
         assert res['hits']['total']
 
-        records = [decode_record_timestamp(_['fields']) for _ in res['hits']['hits']]
-        if res['hits']['total'] == 1:
-            records = records[0]
+        res = [decode_record_timestamp(_['fields']) for _ in res['hits']['hits']]
+        if len(res) == 1:
+            res = res[0]
 
-        return records
+        return res
 
     def _obtain_data_mongo(self, field):
         db = pymongo.Connection(self.db_server).clio
