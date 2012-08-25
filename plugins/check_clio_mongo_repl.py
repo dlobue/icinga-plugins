@@ -84,7 +84,9 @@ class MongodbReplLagCheck(nagiosplugin.Check):
         field = 'data.repl_status'
         res = self._obtain_data_es(field)
 
-        assert (datetime.utcnow() - res['timestamp']).seconds < 60, "stale data! is arke running?"
+        utcnow = datetime.utcnow()
+        assert utcnow > res['timestamp'], "data comes from the future! FIX IT! utcnow: %s, timestamp: %s" % (utcnow, res['timestamp'])
+        assert (utcnow - res['timestamp']).seconds < 60, "stale data! is arke running? utcnow: %s, timestamp: %s" % (utcnow, res['timestamp'])
         
         if res[field] is None:
             self.primary = None

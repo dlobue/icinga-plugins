@@ -48,7 +48,9 @@ class DiskCheck(nagiosplugin.Check):
         res = db[coll_name].find_one({'host': self.server},
                                          sort=[('timestamp', pymongo.DESCENDING)],
                                          fields=[field, 'timestamp'])
-        assert (datetime.utcnow() - res['timestamp']).seconds < 60, "stale data! is arke running?"
+        utcnow = datetime.utcnow()
+        assert utcnow > res['timestamp'], "data comes from the future! FIX IT! utcnow: %s, timestamp: %s" % (utcnow, res['timestamp'])
+        assert (utcnow - res['timestamp']).seconds < 60, "stale data! is arke running? utcnow: %s, timestamp: %s" % (utcnow, res['timestamp'])
         fs_perc = res['data']['fs'][self.filesystem]['percent']
         self.usage = fs_perc
         self.measures = [nagiosplugin.Measure(
