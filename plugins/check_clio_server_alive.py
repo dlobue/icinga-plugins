@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 
 import nagiosplugin
 import pymongo
-from pyes import ES, query
+from pyes import ES, query, filters
 
 from utils import decode_record_timestamp
 
