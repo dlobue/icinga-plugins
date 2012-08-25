@@ -5,6 +5,8 @@ from datetime import datetime
 import nagiosplugin
 from pyes import ES, query
 
+from .utils import decode_record_timestamp
+
 class CPUCheck(nagiosplugin.Check):
 
     name = 'cpu use percent'
@@ -44,24 +46,29 @@ class CPUCheck(nagiosplugin.Check):
             import sys
             sys.exit(3)
 
-    def _obtain_data_es(self, field):
+    def _obtain_data_es(self, field, size=2):
         conn = ES("%s:%s" % (self.db_server, self.db_port))
+        utcnow = datetime.utcnow()
 
         q = query.Search(query.TermQuery('host', self.server),
                          sort=[dict(timestamp=dict(order='desc'))],
                          fields=[field, 'timestamp'],
                         )
         res = conn.search_raw(q,
-                          'clio', #TODO: turn into a parameter
+                          utcnow.strftime('clio_%Y%m'),
                           'system',
-                          size=2
+                          size=size
                          )
 
 
         assert not res['timed_out']
         assert res['hits']['total']
 
-        return [_['fields'] for _ in res['hits']['hits']]
+        records = [decode_record_timestamp(_['fields']) for _ in res['hits']['hits']]
+        if res['hits']['total'] == 1:
+            records = records[0]
+
+        return records
 
     def obtain_data(self):
 

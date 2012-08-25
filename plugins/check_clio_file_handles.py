@@ -6,6 +6,8 @@ import nagiosplugin
 import pymongo
 from pyes import ES, query
 
+from .utils import decode_record_timestamp
+
 class FileHandleCheck(nagiosplugin.Check):
 
     name = 'available_file_handles'
@@ -47,28 +49,29 @@ class FileHandleCheck(nagiosplugin.Check):
             sys.exit(3)
 
 
-    def _obtain_data_es(self, field):
+    def _obtain_data_es(self, field, size=1):
         conn = ES("%s:%s" % (self.db_server, self.db_port))
+        utcnow = datetime.utcnow()
 
         q = query.Search(query.TermQuery('host', self.server),
                          sort=[dict(timestamp=dict(order='desc'))],
                          fields=[field, 'timestamp'],
                         )
         res = conn.search_raw(q,
-                          'clio', #TODO: turn into a parameter
+                          utcnow.strftime('clio_%Y%m'),
                           'system',
-                          size=1
+                          size=size
                          )
 
 
         assert not res['timed_out']
         assert res['hits']['total']
 
-        res = [_['fields'] for _ in res['hits']['hits']]
-        if len(res) == 1:
-            res = res[0]
+        records = [decode_record_timestamp(_['fields']) for _ in res['hits']['hits']]
+        if res['hits']['total'] == 1:
+            records = records[0]
 
-        return res
+        return records
 
     def _obtain_data_mongo(self, field):
         db = pymongo.Connection(self.db_server).clio

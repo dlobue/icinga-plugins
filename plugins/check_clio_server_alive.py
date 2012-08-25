@@ -6,6 +6,8 @@ import nagiosplugin
 import pymongo
 from pyes import ES, query
 
+from .utils import decode_record_timestamp
+
 class AliveCheck(nagiosplugin.Check):
 
     name = 'alive check'
@@ -48,7 +50,7 @@ class AliveCheck(nagiosplugin.Check):
             import sys
             sys.exit(3)
 
-    def _obtain_data_ssh_es(self):
+    def _old_obtain_data_ssh_es(self):
         conn = ES("%s:%s" % (self.db_server, self.db_port))
 
         interval = self.SSH_INTERVAL
@@ -79,7 +81,7 @@ class AliveCheck(nagiosplugin.Check):
         assert not res['timed_out']
         assert res['hits']['total']
 
-        res = [_['fields'] for _ in res['hits']['hits']]
+        res = [decode_record_timestamp(_['fields']) for _ in res['hits']['hits']]
         return res
 
     def _obtain_data_system_es(self, size=1):
@@ -100,10 +102,11 @@ class AliveCheck(nagiosplugin.Check):
         assert not res['timed_out']
         assert res['hits']['total']
 
-        res = [_['fields'] for _ in res['hits']['hits']]
+        res = [decode_record_timestamp(_['fields']) for _ in res['hits']['hits']]
         if size == 1:
             res = res[0]
         return res
+
 
     def _obtain_data_ssh_mongo(self):
         db = pymongo.Connection(self.db_server).clio

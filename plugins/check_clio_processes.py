@@ -8,6 +8,8 @@ import nagiosplugin
 import pymongo
 from pyes import ES, query
 
+from .utils import decode_record_timestamp
+
 class ProcessCheck(nagiosplugin.Check):
 
     name = 'Process check'
@@ -85,13 +87,14 @@ class ProcessCheck(nagiosplugin.Check):
 
     def _obtain_data_es(self, field, size=1):
         conn = ES("%s:%s" % (self.db_server, self.db_port))
+        utcnow = datetime.utcnow()
 
         q = query.Search(query.TermQuery('host', self.server),
                          sort=[dict(timestamp=dict(order='desc'))],
                          fields=[field, 'timestamp'],
                         )
         res = conn.search_raw(q,
-                          'clio', #TODO: turn into a parameter
+                          utcnow.strftime('clio_%Y%m'),
                           'system',
                           size=size
                          )
@@ -100,10 +103,11 @@ class ProcessCheck(nagiosplugin.Check):
         assert not res['timed_out']
         assert res['hits']['total']
 
-        res = [_['fields'] for _ in res['hits']['hits']]
-        if size == 1:
-            res = res[0]
-        return res
+        records = [decode_record_timestamp(_['fields']) for _ in res['hits']['hits']]
+        if res['hits']['total'] == 1:
+            records = records[0]
+
+        return records
 
     def _obtain_data_mongo(self, field):
         db = pymongo.Connection(self.db_server).clio
