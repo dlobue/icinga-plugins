@@ -18,7 +18,7 @@ def decode_timestamp(data):
     '''
     fmt = '%Y-%m-%dT%H:%M:%S'
     tzoffset = None
-    if len(data) > 19:
+    if '.' in data:
         fmt += '.%f'
         if '-' in data[data.index('T'):]:
             tzsign = '-'
