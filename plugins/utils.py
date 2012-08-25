@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 def decode_record_timestamp(record):
     for key in ('timestamp', 'ts'):
         if key in record and isinstance(record[key], basestring):
-            record[key] = decode_timestamp(record)
+            record[key] = decode_timestamp(record[key])
             break
     return record
 
